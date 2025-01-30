@@ -79,14 +79,18 @@ if (!customElements.get('product-form')) {
                 'modalClosed',
                 () => {
                   setTimeout(() => {
-                    this.cart.renderContents(response);
+                    this.measurePerformance("cart-performance:add-to-cart:click-event:paint-updated-sections", () => {
+                      this.cart.renderContents(response);
+                    });
                   });
                 },
                 { once: true }
               );
               quickAddModal.hide(true);
             } else {
-              this.cart.renderContents(response);
+              this.measurePerformance("cart-performance:add-to-cart:click-event:paint-updated-sections", () => {
+                this.cart.renderContents(response);
+              });
             }
           })
           .catch((e) => {
@@ -97,6 +101,8 @@ if (!customElements.get('product-form')) {
             if (this.cart && this.cart.classList.contains('is-empty')) this.cart.classList.remove('is-empty');
             if (!this.error) this.submitButton.removeAttribute('aria-disabled');
             this.querySelector('.loading__spinner').classList.add('hidden');
+
+            this.measurePerformanceFromStartingEvent("cart-performance:add-to-cart:click-event", evt);
           });
       }
 
@@ -127,6 +133,34 @@ if (!customElements.get('product-form')) {
 
       get variantIdInput() {
         return this.form.querySelector('[name=id]');
+      }
+
+      measurePerformanceFromStartingEvent(benchmarkName, event) {
+        const startMarker = performance.mark(`${benchmarkName}:start`, {
+          startTime: event.timeStamp
+        });
+
+        const endMarker = performance.mark(`${benchmarkName}:end`);
+
+        performance.measure(
+          benchmarkName,
+          `${benchmarkName}:start`,
+          `${benchmarkName}:end`
+        );
+      }
+
+      measurePerformance(benchmarkName, callback) {
+        const startMarker = performance.mark(`${benchmarkName}:start`);
+
+        callback();
+
+        const endMarker = performance.mark(`${benchmarkName}:end`);
+
+        performance.measure(
+          benchmarkName,
+          `${benchmarkName}:start`,
+          `${benchmarkName}:end`
+        );
       }
     }
   );
